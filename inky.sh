@@ -6,7 +6,7 @@ HOSTNAME='archlinux'
 TIMEZONE='America/Chicago'
 
 welcome() {
-  echo 'step ${STEP}/5'
+  echo "step ${STEP}/5"
   echo 'Welcome to inky the archlinux installer'
   echo 'type next to go to the next step'
   echo 'type previous to go to a previous step'
@@ -16,13 +16,13 @@ welcome() {
 }
 
 partition() {
-  echo 'step ${STEP}/5'
+  echo "step ${STEP}/5"
   echo 'prepare partitions for archlinux'
   echo 'ex. cfdisk /dev/sda'
 }
 
 filesystem() {
-  echo 'step ${STEP}/5'
+  echo "step ${STEP}/5"
   echo 'create filesystems and mount under /mnt'
   echo 'ex. mkfs.ext4 /dev/sda1 ; mount /dev/sda1 /mnt'
 
@@ -60,7 +60,7 @@ filesystem() {
 }
 
 network() {
-  echo 'step ${STEP}/5'
+  echo "step ${STEP}/5"
   echo 'please setup the network'
   echo 'ex. dhcpcd eth0'
 
@@ -72,7 +72,7 @@ network() {
 }
 
 timezone() {
-  echo 'step ${STEP}/5'
+  echo "step ${STEP}/5"
   echo 'available timezones listed under /usr/share/zoneinfo'
   echo 'enter your timezone [America/Chicago]'
   read timezone
@@ -82,7 +82,7 @@ timezone() {
 }
 
 install() {
-  echo 'step ${STEP}/5'
+  echo "step ${STEP}/5"
 
   echo 'are you sure you want to continue? type yes if you are certain.'
   read ask
@@ -138,9 +138,9 @@ install() {
     device=$(echo "$part" | awk '{ print $1 }')
     location=$(echo "$part" | awk '{ print $2 }')
     type=$(echo "$part" | awk '{ print $3 }')
-    uuid=$(blkid $device | awk '{ print $1}')
+    uuid=$(blkid $device -o value | head -n 1)
 
-    echo -e "\n${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
+    echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
   done
 
   echo 'please edit your configs, type exit when you are done'
