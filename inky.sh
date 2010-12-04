@@ -10,7 +10,7 @@ TIMEZONE='America/Chicago'
 ask() {
   echo "${1}"
   read result
-  if [ -e "${input}" ]; then
+  if [ -z "${result}" ]; then
     result="${2}"
   fi
 }
@@ -38,7 +38,7 @@ filesystem() {
 
   while true; do
     ask 'type add to add a partition or [done]' 'done'
-    if [ $result = 'done' ]; then
+    if [ x"${result}" = x'done' ]; then
       break
     fi
 
@@ -75,7 +75,7 @@ install() {
   echo "step ${STEP}/5"
 
   ask 'are you sure you want to continue? type yes if you are certain. [yes]' 'yes'
-  if [ ! ${result} = 'yes' ]; then
+  if [ ! "${result}" = 'yes' ]; then
     return 0
   fi
 
