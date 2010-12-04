@@ -209,6 +209,7 @@ LABEL archfallback
         INITRD /kernel26-fallback.img
 EOF
 >> /mnt/boot/syslinux/syslinux.cfg
+      ;;
     *)
       echo 'error, no such bootloader'
       ;;
