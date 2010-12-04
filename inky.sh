@@ -4,6 +4,7 @@ STEP=0
 PARTITIONS=()
 HOSTNAME='archlinux'
 TIMEZONE='America/Chicago'
+HWCLOCK='localtime'
 
 # $1 = question $2 = default value
 ask() {
@@ -44,7 +45,7 @@ filesystem() {
     ask 'enter the device [/dev/sda1]' '/dev/sda1'
     device=${result}
 
-    ask 'enter the filesystem type ext2, ext3, [ext4]' 'ext4'
+    ask 'enter the filesystem type ext2, ext3, [ext4], reiserfs' 'ext4'
     type=${result}
 
     ask 'enter the filesystem location [/]' '/'
@@ -68,6 +69,9 @@ timezone() {
   echo 'available timezones listed under /usr/share/zoneinfo'
   ask 'enter your timezone [America/Chicago]' 'America/Chicago'
   TIMEZONE=${result}
+
+  ask 'how should the time be stored on the hardware clock? [localtime], or utc' 'localtime'
+  HWCLOCK=${result}
 }
 
 install() {
@@ -93,6 +97,9 @@ install() {
       ext2)
         mkfs.ext2 $device
         ;;
+      reiserfs)
+        mkfs.reiserfs $device
+        ;;
       *)
         echo "error"
         ;;
@@ -117,6 +124,7 @@ install() {
 
   # set some default configs for convenience
   sed -i "s/myhost/$HOSTNAME/" /mnt/etc/rc.conf
+  sed -i "s/localtime/$HWCLOCK/" /mnt/etc/rc.conf
   sed -i "s/localhost$/localhost ${HOSTNAME}/" /mnt/etc/hosts
   sed -i "s_Canada/Pacific_${TIMEZONE}_" /mnt/etc/rc.conf
   sed -i "s_#Server = http://mirrors.kernel.org_Server = http://mirrors.kernel.org_" /mnt/etc/pacman.d/mirrorlist
