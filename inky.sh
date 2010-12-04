@@ -98,7 +98,7 @@ install() {
         mkfs.ext2 $device
         ;;
       reiserfs)
-        mkfs.reiserfs $device
+        yes | mkfs.reiserfs $device
         ;;
       jfs)
         mkfs.jfs $device
