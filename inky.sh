@@ -157,31 +157,30 @@ install() {
     syslinux)
       pacman --cachedir /mnt/var/cache/pacman/pkg -S syslinux -r /mnt --noconfirm
       mkdir /mnt/boot/syslinux
-      extlinux --install /mnt/boot/syslinux
+      chroot /mnt extlinux --install /boot/syslinux
 
       # make bootable
-      sfdisk /dev/sda1 << EOF
-,,,*
-EOF
-      #parted set /dev/sda1 boot on
+#      sfdisk /dev/sda1 << EOF
+#,,,*
+#EOF
+      parted /dev/sda set 1 boot on
 
       cat /mnt/usr/lib/syslinux/mbr.bin > ${grubdevice}
-      cat << EOF
+      cat << EOF >> /mnt/boot/syslinux/syslinux.cfg
 PROMPT 1
 TIMEOUT 50
 DEFAULT arch
 
 LABEL arch
-        LINUX /vmlinuz26
+        LINUX /boot/vmlinuz26
         APPEND root=/dev/sda1 ro
-        INITRD /kernel26.img
+        INITRD /boot/kernel26.img
 
 LABEL archfallback
-        LINUX /vmlinuz26
+        LINUX /boot/vmlinuz26
         APPEND root=/dev/sda1 ro
-        INITRD /kernel26-fallback.img
+        INITRD /boot/kernel26-fallback.img
 EOF
->> /mnt/boot/syslinux/syslinux.cfg
       ;;
     *)
       echo 'error, no such bootloader'
