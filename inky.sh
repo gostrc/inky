@@ -9,9 +9,9 @@ TIMEZONE='America/Chicago'
 # $2 = default value
 ask() {
   echo "${1}"
-  read input
+  read result
   if [ -e "${input}" ]; then
-    input="${2}"
+    result="${2}"
   fi
 }
 
@@ -37,33 +37,19 @@ filesystem() {
   echo 'ex. mkfs.ext4 /dev/sda1 ; mount /dev/sda1 /mnt'
 
   while true; do
-    echo 'type add to add a partition or [done]'
-    read PROMPT
-    if [ -e $PROMPT ]; then
-      PROMPT='done'
-    fi
-
-    if [ $PROMPT = 'done' ]; then
+    ask 'type add to add a partition or [done]' 'done'
+    if [ $result = 'done' ]; then
       break
     fi
 
-    echo 'enter the device [/dev/sda1]'
-    read device
-    if [ -e $device ]; then
-      device='/dev/sda1'
-    fi
+    ask 'enter the device [/dev/sda1]' '/dev/sda1'
+    device=${result}
 
-    echo 'enter the filesystem type [ext4]'
-    read type
-    if [ -e $type ]; then
-      type='ext4'
-    fi
+    ask 'enter the filesystem type [ext4]' 'ext4'
+    type=${result}
 
-    echo 'enter the filesystem location [/]'
-    read location
-    if [ -e $location ]; then
-      location='/'
-    fi
+    ask 'enter the filesystem location [/]' '/'
+    location=${result}
 
     PARTITIONS+=("$device $location $type")
   done
@@ -74,29 +60,22 @@ network() {
   echo 'please setup the network'
   echo 'ex. dhcpcd eth0'
 
-  echo 'please enter the hostname [archlinux]'
-  read host
-  if [ ! -e $host ]; then
-    HOSTNAME=$host
-  fi
+  ask 'please enter the hostname [archlinux]' 'archlinux'
+  HOSTNAME=${result}
 }
 
 timezone() {
   echo "step ${STEP}/5"
   echo 'available timezones listed under /usr/share/zoneinfo'
-  echo 'enter your timezone [America/Chicago]'
-  read timezone
-  if [ ! -e $timezone ]; then
-    TIMEZONE=$timezone
-  fi
+  ask 'enter your timezone [America/Chicago]' 'America/Chicago'
+  TIMEZONE=${result}
 }
 
 install() {
   echo "step ${STEP}/5"
 
-  echo 'are you sure you want to continue? type yes if you are certain.'
-  read ask
-  if [ ! $ask = 'yes' ]; then
+  ask 'are you sure you want to continue? type yes if you are certain. [yes]' 'yes'
+  if [ ! ${result} = 'yes' ]; then
     return 0
   fi
 
@@ -163,16 +142,10 @@ install() {
   #############################################################################
   # BOOTLOADER
   #############################################################################
-  echo 'installing bootloader, which to install [grub2], or syslinux?'
-  read bootloader
-  if [ -e ${bootloader} ]; then
-    grubdevice=grub2
-  fi
-  echo 'where to install too? [/dev/sda]'
-  read grubdevice
-  if [ -e ${grubdevice} ]; then
-    grubdevice=/dev/sda
-  fi
+  ask 'installing bootloader, which to install [grub2], or syslinux?' 'grub2'
+  bootloader=${result}
+  ask 'where to install too? [/dev/sda]' '/dev/sda'
+  grubdevice=${result}
   case $bootloader in
     grub2)
       # gettext needed for grub-mkconfig
