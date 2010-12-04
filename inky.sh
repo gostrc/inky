@@ -5,8 +5,7 @@ PARTITIONS=()
 HOSTNAME='archlinux'
 TIMEZONE='America/Chicago'
 
-# $1 = question
-# $2 = default value
+# $1 = question $2 = default value
 ask() {
   echo "${1}"
   read result
@@ -45,7 +44,7 @@ filesystem() {
     ask 'enter the device [/dev/sda1]' '/dev/sda1'
     device=${result}
 
-    ask 'enter the filesystem type [ext4]' 'ext4'
+    ask 'enter the filesystem type ext2, ext3, [ext4]' 'ext4'
     type=${result}
 
     ask 'enter the filesystem location [/]' '/'
@@ -148,8 +147,8 @@ install() {
   grubdevice=${result}
   case $bootloader in
     grub2)
-      # gettext needed for grub-mkconfig
-      pacman --cachedir /mnt/var/cache/pacman/pkg -S grub2 gettext -r /mnt --noconfirm
+      pacman --cachedir /mnt/var/cache/pacman/pkg -R grub -r /mnt --noconfirm
+      pacman --cachedir /mnt/var/cache/pacman/pkg -S grub2 -r /mnt --noconfirm
 
       chroot /mnt grub-install ${grubdevice} --no-floppy
       chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
