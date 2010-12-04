@@ -190,6 +190,8 @@ install() {
       sfdisk /dev/sda1 << EOF
 ,,,*
 EOF
+      #parted set /dev/sda1 boot on
+
       cat /mnt/usr/lib/syslinux/mbr.bin > ${grubdevice}
       cat << EOF
 PROMPT 1
