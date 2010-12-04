@@ -115,9 +115,8 @@ install() {
 
   mkdir -p /mnt/var/lib/pacman
   pacman -Sy -r /mnt
-  # gettext needed for grub-mkconfig
   mkdir -p /mnt/var/cache/pacman/pkg
-  pacman --cachedir /mnt/var/cache/pacman/pkg -S base base-devel grub2 gettext -r /mnt --noconfirm
+  pacman --cachedir /mnt/var/cache/pacman/pkg -S base -r /mnt --noconfirm
 
   cp /etc/resolv.conf /mnt/etc/
   #cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d
@@ -151,14 +150,61 @@ install() {
   echo "set the root password"
   chroot /mnt passwd
 
-  echo 'installing grub2 to the mbr, where to install too? [/dev/sda]'
+  #############################################################################
+  # BOOTLOADER
+  #############################################################################
+  echo 'installing bootloader, which to install [grub2], or syslinux?'
+  read bootloader
+  if [ -e ${bootloader} ]; then
+    grubdevice=grub2
+  fi
+  echo 'where to install too? [/dev/sda]'
   read grubdevice
   if [ -e ${grubdevice} ]; then
     grubdevice=/dev/sda
   fi
-  chroot /mnt grub-install ${grubdevice} --no-floppy
-  chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+  case $bootloader in
+    grub2)
+      # gettext needed for grub-mkconfig
+      pacman --cachedir /mnt/var/cache/pacman/pkg -S grub2 gettext -r /mnt --noconfirm
 
+      chroot /mnt grub-install ${grubdevice} --no-floppy
+      chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+      ;;
+    syslinux)
+      pacman --cachedir /mnt/var/cache/pacman/pkg -S syslinux -r /mnt --noconfirm
+      mkdir /mnt/boot/syslinux
+      extlinux --install /mnt/boot/syslinux
+
+      # make bootable
+      sfdisk /dev/sda1 << EOF
+,,,*
+EOF
+      cat /mnt/usr/lib/syslinux/mbr.bin > ${grubdevice}
+      cat << EOF
+PROMPT 1
+TIMEOUT 50
+DEFAULT arch
+
+LABEL arch
+        LINUX /vmlinuz26
+        APPEND root=/dev/sda1 ro
+        INITRD /kernel26.img
+
+LABEL archfallback
+        LINUX /vmlinuz26
+        APPEND root=/dev/sda1 ro
+        INITRD /kernel26-fallback.img
+EOF
+>> /mnt/boot/syslinux/syslinux.cfg
+    *)
+      echo 'error, no such bootloader'
+      ;;
+  esac
+
+  #############################################################################
+  # CLEANUP
+  #############################################################################
   umount /mnt/{dev,sys,proc}
 
   for part in "$PARTITIONS"; do
