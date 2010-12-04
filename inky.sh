@@ -45,7 +45,7 @@ filesystem() {
     ask 'enter the device [/dev/sda1]' '/dev/sda1'
     device=${result}
 
-    ask 'enter the filesystem type ext2, ext3, [ext4], reiserfs, jfs' 'ext4'
+    ask 'enter the filesystem type ext2, ext3, [ext4], reiserfs, jfs, xfs' 'ext4'
     type=${result}
 
     ask 'enter the filesystem location [/]' '/'
@@ -102,6 +102,9 @@ install() {
         ;;
       jfs)
         mkfs.jfs $device
+        ;;
+      xfs)
+        mkfs.xfs $device
         ;;
       *)
         echo "error"
