@@ -5,6 +5,16 @@ PARTITIONS=()
 HOSTNAME='archlinux'
 TIMEZONE='America/Chicago'
 
+# $1 = question
+# $2 = default value
+ask() {
+  echo "${1}"
+  read input
+  if [ -e "${input}" ]; then
+    input="${2}"
+  fi
+}
+
 welcome() {
   echo "step ${STEP}/5"
   echo 'Welcome to inky the archlinux installer'
