@@ -142,7 +142,7 @@ install() {
   #############################################################################
   # BOOTLOADER
   #############################################################################
-  ask 'installing bootloader, which to install [grub2], or syslinux?' 'grub2'
+  ask 'installing bootloader, which to install [grub2], syslinux, or none?' 'grub2'
   bootloader=${result}
   ask 'where to install too? [/dev/sda]' '/dev/sda'
   grubdevice=${result}
@@ -182,6 +182,8 @@ LABEL archfallback
         INITRD /boot/kernel26-fallback.img
 EOF
       ;;
+    none)
+      ;;
     *)
       echo 'error, no such bootloader'
       ;;
@@ -203,7 +205,7 @@ EOF
 }
 
 process() {
-  steps=(welcome partition filesystem network timezone install)
+  steps=('welcome' 'partition' 'filesystem' 'network' 'timezone' 'install')
   ${steps[${STEP}]}
 }
 
