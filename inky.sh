@@ -151,7 +151,7 @@ install() {
   #############################################################################
   # AUTOCONFIG
   #############################################################################
-  echo 'auto-editing some configs for convenience'
+  echo 'autoconfig for convenience'
   sed -i "s/myhost/$HOSTNAME/" /mnt/etc/rc.conf
   sed -i "s/localtime/$HWCLOCK/" /mnt/etc/rc.conf
   sed -i "s/localhost$/localhost ${HOSTNAME}/" /mnt/etc/hosts
@@ -262,8 +262,8 @@ EOF
     umount ${device}
   done
 
-  echo "type reboot to boot into your new system"
-  echo "Enjoy Archlinux!"
+  echo 'type reboot to boot into your new system'
+  echo 'Enjoy Archlinux!'
 }
 
 process() {
