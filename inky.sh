@@ -38,7 +38,7 @@ filesystem() {
 
   while true; do
     ask 'type add to add a partition or [done]' 'done'
-    if [ x"${result}" = x'done' ]; then
+    if [ "x${result}" = 'xdone' ]; then
       break
     fi
 
@@ -74,10 +74,19 @@ timezone() {
   HWCLOCK=${result}
 }
 
+bootloader() {
+  echo "step ${STEP}/5"
+
+  ask 'installing bootloader, which to install [grub2], syslinux, or none?' 'grub2'
+  bootloader=${result}
+  ask 'where to install too? [/dev/sda]' '/dev/sda'
+  grubdevice=${result}
+}
+
 install() {
   echo "step ${STEP}/5"
 
-  ask 'are you sure you want to continue? type yes if you are certain. [yes]' 'yes'
+  ask 'are you sure you want to continue installing? type yes if you are certain. [yes]' 'yes'
   if [ ! "${result}" = 'yes' ]; then
     return 0
   fi
@@ -158,10 +167,6 @@ install() {
   #############################################################################
   # BOOTLOADER
   #############################################################################
-  ask 'installing bootloader, which to install [grub2], syslinux, or none?' 'grub2'
-  bootloader=${result}
-  ask 'where to install too? [/dev/sda]' '/dev/sda'
-  grubdevice=${result}
   case $bootloader in
     grub2)
       pacman --cachedir /mnt/var/cache/pacman/pkg -R grub -r /mnt --noconfirm
@@ -221,7 +226,7 @@ EOF
 }
 
 process() {
-  steps=('welcome' 'partition' 'filesystem' 'network' 'timezone' 'install')
+  steps=('welcome' 'partition' 'filesystem' 'network' 'timezone' 'bootloader' 'install')
   ${steps[${STEP}]}
 }
 
