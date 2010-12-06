@@ -185,14 +185,14 @@ install() {
   for part in "${PARTITIONS}"; do
     device=$(echo "$part" | awk '{ print $1 }')
     location=$(echo "$part" | awk '{ print $2 }')
-    type=$(echo "$part" | awk '{ print $3 }')
-    uuid=$(blkid $device -o value | head -n 1)
+#    type=$(echo "$part" | awk '{ print $3 }')
+#    uuid=$(blkid $device -o value | head -n 1)
 
     if [ ${location} = '/' ]; then
-      rootdevice=${location}
+      rootdevice=${device}
     fi
     if [ ${location} = '/boot' ]; then
-      bootdevice=${location}
+      bootdevice=${device}
     fi
   done
   
