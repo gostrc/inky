@@ -6,6 +6,8 @@ PARTITIONS=()
 HOSTNAME='archlinux'
 TIMEZONE='America/Chicago'
 HWCLOCK='localtime'
+USELVM='no'
+USELVMSNAPSHOT='no'
 
 # $1 = question $2 = default value
 ask() {
@@ -29,13 +31,33 @@ welcome() {
 partition() {
   echo "step ${STEP}/${TOTALSTEPS}"
   echo 'prepare partitions for archlinux'
-  echo 'ex. cfdisk /dev/sda'
+  echo 'ex. cfdisk /dev/sda, fdisk, parted, whatever'
 }
 
 filesystem() {
+  PARTITIONS=()
   echo "step ${STEP}/${TOTALSTEPS}"
-  echo 'create filesystems and mount under /mnt'
-  echo 'ex. mkfs.ext4 /dev/sda1 ; mount /dev/sda1 /mnt'
+
+  ask 'do you want to use lvm yes, or [no]' 'no'
+  if [ ${result} = 'yes' ]; then
+    USELVM=${result}
+    ask 'do you want to use lvm snapshots yes, or [no]' 'no'
+    if [ ${result} = 'yes' ]; then
+      USELVMSNAPSHOT=${result}
+    fi
+
+    # need to load module that handles lvm
+    modprobe dm-mod
+
+    ask 'enter the devices/partitions you wish to use seperated by spaces [/dev/sda]' '/dev/sda'
+    pvcreate ${result}
+
+    echo "use vgcreate, vgextend, and vgdisplay to create volume groups, type exit when you're done"
+    /bin/bash
+
+    echo "use lvcreate, and lvdisplay to create logical volumes, type exit when you're done"
+    /bin/bash
+  fi
 
   while true; do
     ask 'type add to add a partition or [done]' 'done'
@@ -157,6 +179,13 @@ install() {
   sed -i "s/localhost$/localhost ${HOSTNAME}/" /mnt/etc/hosts
   sed -i "s_Canada/Pacific_${TIMEZONE}_" /mnt/etc/rc.conf
   sed -i "s_#Server = http://mirrors.kernel.org_Server = http://mirrors.kernel.org_" /mnt/etc/pacman.d/mirrorlist
+  if [ "x${USELVM}" = 'xyes' ]; then
+    sed -i "s/USELVM=\"no\"/USELVM=\"${USELVM}\"/" /mnt/etc/rc.conf
+    sed -i 's/filesystems/lvm2 filesystems/' /mnt/etc/mkinitcpio.conf
+    if [ "x${USELVMSNAPSHOT}" = 'xyes' ]; then
+      sed -i 's/MODULES=""/MODULES="dm-snapshot"/' /mnt/etc/mkinitcpio.conf
+    fi
+  fi
 
   for part in "${PARTITIONS}"; do
     device=$(echo "$part" | awk '{ print $1 }')
@@ -172,7 +201,7 @@ install() {
   chroot /mnt /bin/bash
   chroot /mnt mkinitcpio -p kernel26
   chroot /mnt locale-gen
-  echo 'set the root password'
+  echo 'set the root password, might have to type exit if you are dropped to a prompt'
   chroot /mnt /bin/bash while passwd\; do true\; done
 
   #############################################################################
