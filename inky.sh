@@ -178,6 +178,24 @@ install() {
   #############################################################################
   # BOOTLOADER
   #############################################################################
+
+  rootdevice=/dev/sda1
+  bootdevice=/dev/sda1
+  # find / and /boot
+  for part in "${PARTITIONS}"; do
+    device=$(echo "$part" | awk '{ print $1 }')
+    location=$(echo "$part" | awk '{ print $2 }')
+    type=$(echo "$part" | awk '{ print $3 }')
+    uuid=$(blkid $device -o value | head -n 1)
+
+    if [ ${location} = '/' ]; then
+      rootdevice=${location}
+    fi
+    if [ ${location} = '/boot' ]; then
+      bootdevice=${location}
+    fi
+  done
+  
   case $bootloader in
     grub2)
       pacman --cachedir /mnt/var/cache/pacman/pkg -R grub -r /mnt --noconfirm
@@ -189,30 +207,37 @@ install() {
     syslinux)
       pacman --cachedir /mnt/var/cache/pacman/pkg -S syslinux -r /mnt --noconfirm
       mkdir /mnt/boot/syslinux
+      cat /mnt/usr/lib/syslinux/mbr.bin > ${grubdevice}
       chroot /mnt extlinux --install /boot/syslinux
 
       # make bootable
 #      sfdisk /dev/sda1 << EOF
 #,,,*
 #EOF
-#     echo ",,,*" | sfdisk /dev/sda1
-      parted /dev/sda set 1 boot on
+      echo ",,,*" | sfdisk ${bootdevice}
+      #parted /dev/sda set 1 boot on
 
-      cat /mnt/usr/lib/syslinux/mbr.bin > ${grubdevice}
+      #cat /mnt/usr/lib/syslinux/mbr.bin > ${grubdevice}
+
+      bootprefix='/boot'
+      if [ ! ${rootdevice} = ${bootdevice} ]; then
+        bootprefix=''
+      fi
+
       cat << EOF >> /mnt/boot/syslinux/syslinux.cfg
 PROMPT 1
 TIMEOUT 50
 DEFAULT arch
 
 LABEL arch
-        LINUX /boot/vmlinuz26
-        APPEND root=/dev/sda1 ro
-        INITRD /boot/kernel26.img
+        LINUX ${bootprefix}/vmlinuz26
+        APPEND root=${rootdevice} ro
+        INITRD ${bootprefix}/kernel26.img
 
 LABEL archfallback
-        LINUX /boot/vmlinuz26
-        APPEND root=/dev/sda1 ro
-        INITRD /boot/kernel26-fallback.img
+        LINUX ${bootprefix}/vmlinuz26
+        APPEND root=${rootdevice} ro
+        INITRD ${bootprefix}/kernel26-fallback.img
 EOF
       ;;
     grub)
