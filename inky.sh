@@ -171,40 +171,6 @@ install() {
   pacman --cachedir /mnt/var/cache/pacman/pkg -S base -r /mnt --noconfirm
 
   #############################################################################
-  # AUTOCONFIG
-  #############################################################################
-  echo 'autoconfig for convenience'
-  sed -i "s/myhost/$HOSTNAME/" /mnt/etc/rc.conf
-  sed -i "s/localtime/$HWCLOCK/" /mnt/etc/rc.conf
-  sed -i "s/localhost$/localhost ${HOSTNAME}/" /mnt/etc/hosts
-  sed -i "s_Canada/Pacific_${TIMEZONE}_" /mnt/etc/rc.conf
-  sed -i "s_#Server = http://mirrors.kernel.org_Server = http://mirrors.kernel.org_" /mnt/etc/pacman.d/mirrorlist
-  if [ "x${USELVM}" = 'xyes' ]; then
-    sed -i "s/USELVM=\"no\"/USELVM=\"${USELVM}\"/" /mnt/etc/rc.conf
-    sed -i 's/filesystems/lvm2 filesystems/' /mnt/etc/mkinitcpio.conf
-    if [ "x${USELVMSNAPSHOT}" = 'xyes' ]; then
-      sed -i 's/MODULES=""/MODULES="dm-snapshot"/' /mnt/etc/mkinitcpio.conf
-    fi
-  fi
-
-  for part in "${PARTITIONS}"; do
-    device=$(echo "$part" | awk '{ print $1 }')
-    location=$(echo "$part" | awk '{ print $2 }')
-    type=$(echo "$part" | awk '{ print $3 }')
-    uuid=$(blkid $device -o value | head -n 1)
-
-    echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
-  done
-
-  echo 'please edit your configs and set the password by typing passwd, type exit when you are done'
-  echo 'ex. vi /etc/{fstab,rc.conf,hosts,mkinitcpio.conf,locale.gen}'
-  chroot /mnt /bin/bash
-  chroot /mnt mkinitcpio -p kernel26
-  chroot /mnt locale-gen
-  echo 'set the root password, might have to type exit if you are dropped to a prompt'
-  chroot /mnt /bin/bash while passwd\; do true\; done
-
-  #############################################################################
   # BOOTLOADER
   #############################################################################
 
@@ -279,6 +245,40 @@ EOF
       echo 'error, no such bootloader'
       ;;
   esac
+
+  #############################################################################
+  # AUTOCONFIG
+  #############################################################################
+  echo 'autoconfig for convenience'
+  sed -i "s/myhost/$HOSTNAME/" /mnt/etc/rc.conf
+  sed -i "s/localtime/$HWCLOCK/" /mnt/etc/rc.conf
+  sed -i "s/localhost$/localhost ${HOSTNAME}/" /mnt/etc/hosts
+  sed -i "s_Canada/Pacific_${TIMEZONE}_" /mnt/etc/rc.conf
+  sed -i "s_#Server = http://mirrors.kernel.org_Server = http://mirrors.kernel.org_" /mnt/etc/pacman.d/mirrorlist
+  if [ "x${USELVM}" = 'xyes' ]; then
+    sed -i "s/USELVM=\"no\"/USELVM=\"${USELVM}\"/" /mnt/etc/rc.conf
+    sed -i 's/filesystems/lvm2 filesystems/' /mnt/etc/mkinitcpio.conf
+    if [ "x${USELVMSNAPSHOT}" = 'xyes' ]; then
+      sed -i 's/MODULES=""/MODULES="dm-snapshot"/' /mnt/etc/mkinitcpio.conf
+    fi
+  fi
+
+  for part in "${PARTITIONS}"; do
+    device=$(echo "$part" | awk '{ print $1 }')
+    location=$(echo "$part" | awk '{ print $2 }')
+    type=$(echo "$part" | awk '{ print $3 }')
+    uuid=$(blkid $device -o value | head -n 1)
+
+    echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
+  done
+
+  echo 'please edit your configs and set the password by typing passwd, type exit when you are done'
+  echo 'ex. vi /etc/{fstab,rc.conf,hosts,mkinitcpio.conf,locale.gen}'
+  chroot /mnt /bin/bash
+  chroot /mnt mkinitcpio -p kernel26
+  chroot /mnt locale-gen
+  #echo 'set the root password, might have to type exit if you are dropped to a prompt'
+  #chroot /mnt /bin/bash while passwd\; do true\; done
 
   #############################################################################
   # CLEANUP
