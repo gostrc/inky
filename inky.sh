@@ -1,6 +1,7 @@
 #!/bin/bash
 
 STEP=0
+TOTALSTEPS=6
 PARTITIONS=()
 HOSTNAME='archlinux'
 TIMEZONE='America/Chicago'
@@ -16,7 +17,7 @@ ask() {
 }
 
 welcome() {
-  echo "step ${STEP}/5"
+  echo "step ${STEP}/${TOTALSTEPS}"
   echo 'Welcome to inky the archlinux installer'
   echo 'type next to go to the next step'
   echo 'type previous to go to a previous step'
@@ -26,13 +27,13 @@ welcome() {
 }
 
 partition() {
-  echo "step ${STEP}/5"
+  echo "step ${STEP}/${TOTALSTEPS}"
   echo 'prepare partitions for archlinux'
   echo 'ex. cfdisk /dev/sda'
 }
 
 filesystem() {
-  echo "step ${STEP}/5"
+  echo "step ${STEP}/${TOTALSTEPS}"
   echo 'create filesystems and mount under /mnt'
   echo 'ex. mkfs.ext4 /dev/sda1 ; mount /dev/sda1 /mnt'
 
@@ -56,7 +57,7 @@ filesystem() {
 }
 
 network() {
-  echo "step ${STEP}/5"
+  echo "step ${STEP}/${TOTALSTEPS}"
   echo 'please setup the network'
   echo 'ex. dhcpcd eth0'
 
@@ -65,7 +66,7 @@ network() {
 }
 
 timezone() {
-  echo "step ${STEP}/5"
+  echo "step ${STEP}/${TOTALSTEPS}"
   echo 'available timezones listed under /usr/share/zoneinfo'
   ask 'enter your timezone [America/Chicago]' 'America/Chicago'
   TIMEZONE=${result}
@@ -75,22 +76,25 @@ timezone() {
 }
 
 bootloader() {
-  echo "step ${STEP}/5"
+  echo "step ${STEP}/${TOTALSTEPS}"
 
-  ask 'installing bootloader, which to install [grub2], syslinux, or none?' 'grub2'
+  ask 'installing bootloader, which to install; grub, [grub2], lilo, syslinux, or none?' 'grub2'
   bootloader=${result}
   ask 'where to install too? [/dev/sda]' '/dev/sda'
   grubdevice=${result}
 }
 
 install() {
-  echo "step ${STEP}/5"
+  echo "step ${STEP}/${TOTALSTEPS}"
 
   ask 'are you sure you want to continue installing? type yes if you are certain. [yes]' 'yes'
   if [ ! "${result}" = 'yes' ]; then
     return 0
   fi
 
+  #############################################################################
+  # FILESYSTEM MOUNTING
+  #############################################################################
   echo 'creating filesystems...'
   for part in "$PARTITIONS"; do
     device=$(echo "$part" | awk '{ print $1 }')
@@ -126,21 +130,28 @@ install() {
     mount $device /mnt${location}
   done
 
-  mkdir -p /mnt/var/lib/pacman
-  pacman -Sy -r /mnt
-  mkdir -p /mnt/var/cache/pacman/pkg
-  pacman --cachedir /mnt/var/cache/pacman/pkg -S base -r /mnt --noconfirm
+  mount -t proc proc /mnt/proc
+  mount -t sysfs sys /mnt/sys
+  mount -o bind /dev /mnt/dev
 
+  #############################################################################
+  # PACKAGE INSTALLATION
+  #############################################################################
+  echo 'installing system'
   cp /etc/resolv.conf /mnt/etc/
   #cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d
   # get latest mirrorlist
   wget -O /mnt/etc/pacman.d/mirrorlist http://www.archlinux.org/mirrorlist/all/
 
-  mount -t proc proc /mnt/proc
-  mount -t sysfs sys /mnt/sys
-  mount -o bind /dev /mnt/dev
+  mkdir -p /mnt/var/lib/pacman
+  pacman -Sy -r /mnt
+  mkdir -p /mnt/var/cache/pacman/pkg
+  pacman --cachedir /mnt/var/cache/pacman/pkg -S base -r /mnt --noconfirm
 
-  # set some default configs for convenience
+  #############################################################################
+  # AUTOCONFIG
+  #############################################################################
+  echo 'auto-editing some configs for convenience'
   sed -i "s/myhost/$HOSTNAME/" /mnt/etc/rc.conf
   sed -i "s/localtime/$HWCLOCK/" /mnt/etc/rc.conf
   sed -i "s/localhost$/localhost ${HOSTNAME}/" /mnt/etc/hosts
@@ -156,13 +167,13 @@ install() {
     echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
   done
 
-  echo 'please edit your configs, type exit when you are done'
+  echo 'please edit your configs and set the password by typing passwd, type exit when you are done'
   echo 'ex. vi /etc/{fstab,rc.conf,hosts,mkinitcpio.conf,locale.gen}'
   chroot /mnt /bin/bash
   chroot /mnt mkinitcpio -p kernel26
   chroot /mnt locale-gen
-  echo "set the root password"
-  chroot /mnt passwd
+  echo 'set the root password'
+  chroot /mnt /bin/bash while passwd\; do true\; done
 
   #############################################################################
   # BOOTLOADER
@@ -184,6 +195,7 @@ install() {
 #      sfdisk /dev/sda1 << EOF
 #,,,*
 #EOF
+#     echo ",,,*" | sfdisk /dev/sda1
       parted /dev/sda set 1 boot on
 
       cat /mnt/usr/lib/syslinux/mbr.bin > ${grubdevice}
@@ -203,6 +215,10 @@ LABEL archfallback
         INITRD /boot/kernel26-fallback.img
 EOF
       ;;
+    grub)
+      echo 'not supported yet'
+    lilo)
+      echo 'not supported yet'
     none)
       ;;
     *)
