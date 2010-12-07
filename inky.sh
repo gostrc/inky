@@ -74,7 +74,14 @@ filesystem() {
     ask 'enter the filesystem location [/]' '/'
     location=${result}
 
-    PARTITIONS+=("$device $location $type")
+    if [ "x${USELVM}" = 'xyes' ]; then
+      ask 'is this an lvm partition [yes], no' 'yes'
+      islvm=${result}
+    else
+      islvm='no'
+    fi
+
+    PARTITIONS+=("$device $location $type $islvm")
   done
 }
 
