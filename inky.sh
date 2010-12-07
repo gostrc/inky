@@ -270,8 +270,10 @@ EOF
       ;;
     grub)
       echo 'not supported yet'
+      ;;
     lilo)
       echo 'not supported yet'
+      ;;
     none)
       ;;
     *)
