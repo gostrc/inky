@@ -307,7 +307,7 @@ EOF
 
     if [ ${type} = 'tmpfs' ]; then
       echo -e "\n${type} ${location} ${type} defaults 0 0" >> /mnt/etc/fstab
-    elif [${type} = 'swap' ]; then
+    elif [ ${type} = 'swap' ]; then
       echo -e "\nUUID=${uuid} swap ${type} defaults 0 0" >> /mnt/etc/fstab
     elif [ ${type} = 'nilfs' ] || [ ${type} = 'btrfs' ]; then
       echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 0" >> /mnt/etc/fstab # these don't support fsck yet
