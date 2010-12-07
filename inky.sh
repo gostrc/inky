@@ -8,6 +8,7 @@ TIMEZONE='America/Chicago'
 HWCLOCK='localtime'
 USELVM='no'
 USELVMSNAPSHOT='no'
+INTERACTIVE='yes'
 
 # $1 = question $2 = default value
 ask() {
@@ -116,6 +117,11 @@ bootloader() {
 install() {
   echo "step ${STEP}/${TOTALSTEPS}"
 
+  ask 'do you want to edit configs after install, answer no only if you know what you are doing, or are a fan of russian roullette, [yes], no' 'yes'
+  if [ "x${result}" = 'xno' ]; then
+    INTERACTIVE='no'
+  fi
+
   ask 'are you sure you want to continue installing? type yes if you are certain. [yes]' 'yes'
   if [ ! "${result}" = 'yes' ]; then
     return 0
@@ -181,8 +187,8 @@ install() {
   # BOOTLOADER
   #############################################################################
 
-  rootdevice=/dev/sda1
-  bootdevice=/dev/sda1
+  rootdevice='/dev/sda1'
+  bootdevice='notfound'
   # find / and /boot
   for part in "${PARTITIONS}"; do
     device=$(echo "$part" | awk '{ print $1 }')
@@ -197,7 +203,7 @@ install() {
       bootdevice=${device}
     fi
   done
-  
+
   case $bootloader in
     grub2)
       pacman --cachedir /mnt/var/cache/pacman/pkg -R grub -r /mnt --noconfirm
@@ -222,7 +228,7 @@ install() {
       #cat /mnt/usr/lib/syslinux/mbr.bin > ${grubdevice}
 
       bootprefix='/boot'
-      if [ ! ${rootdevice} = ${bootdevice} ]; then
+      if [ ! ${bootdevice} = 'notfound' ]; then
         bootprefix=''
       fi
 
@@ -279,9 +285,17 @@ EOF
     echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
   done
 
-  echo 'please edit your configs and set the password by typing passwd, type exit when you are done'
-  echo 'ex. vi /etc/{fstab,rc.conf,hosts,mkinitcpio.conf,locale.gen}'
-  chroot /mnt /bin/bash
+  if [ ${INTERACTIVE} = 'yes' ]; then
+    echo 'please edit your configs and set the password by typing passwd, type exit when you are done'
+    echo 'ex. vi /etc/{fstab,rc.conf,hosts,mkinitcpio.conf,locale.gen}'
+    echo 'if use lvm for boot'
+    echo 'add'
+    echo 'insmod lvm'
+    echo 'set root=(lvm_group_name-lvm_logical_boot_partition_name)'
+    echo 'to the beginning of the menuentry for grub2'
+  
+    chroot /mnt /bin/bash
+  fi
   chroot /mnt mkinitcpio -p kernel26
   chroot /mnt locale-gen
   #echo 'set the root password, might have to type exit if you are dropped to a prompt'
