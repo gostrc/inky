@@ -69,11 +69,15 @@ filesystem() {
     ask 'enter the device [/dev/sda1]' '/dev/sda1'
     device=${result}
 
-    ask 'enter the filesystem type ext2, ext3, [ext4], reiserfs, jfs, xfs, nilfs, tmpfs' 'ext4'
+    ask 'enter the filesystem type ext2, ext3, [ext4], reiserfs, jfs, xfs, nilfs, tmpfs, swap' 'ext4'
     type=${result}
 
-    ask 'enter the filesystem location [/]' '/'
-    location=${result}
+    if [ ${type} = 'swap' ]; then
+      location='swap'
+    else
+      ask 'enter the filesystem location [/]' '/'
+      location=${result}
+    fi
 
     if [ "x${USELVM}" = 'xyes' ]; then
       ask 'is this an lvm partition [yes], no' 'yes'
@@ -137,35 +141,39 @@ install() {
     type=$(echo "$part" | awk '{ print $3 }')
     case $type in
       ext4)
-        mkfs.ext4 $device
-        mount $device /mnt${location}
+        mkfs.ext4 ${device}
+        mount ${device} /mnt${location}
         ;;
       ext3)
-        mkfs.ext3 $device
-        mount $device /mnt${location}
+        mkfs.ext3 ${device}
+        mount ${device} /mnt${location}
         ;;
       ext2)
-        mkfs.ext2 $device
-        mount $device /mnt${location}
+        mkfs.ext2 ${device}
+        mount ${device} /mnt${location}
         ;;
       reiserfs)
-        yes | mkfs.reiserfs $device
-        mount $device /mnt${location}
+        yes | mkfs.reiserfs ${device}
+        mount ${device} /mnt${location}
         ;;
       jfs)
-        mkfs.jfs $device
-        mount $device /mnt${location}
+        mkfs.jfs ${device}
+        mount ${device} /mnt${location}
         ;;
       xfs)
-        mkfs.xfs $device
-        mount $device /mnt${location}
+        mkfs.xfs ${device}
+        mount ${device} /mnt${location}
         ;;
       nilfs)
-        mkfs.nilfs $device
-        mount $device /mnt${location}
+        mkfs.nilfs ${device}
+        mount ${device} /mnt${location}
         ;;
       tmpfs)
         mount -t tmpfs tmpfs /mnt${location}
+        ;;
+      swap)
+        mkswap ${device}
+        swapon ${device}
         ;;
       *)
         echo "error"
@@ -292,6 +300,8 @@ EOF
 
     if [ ${type} = 'tmpfs' ]; then
       echo -e "\n${type} ${location} ${type} defaults 0 0" >> /mnt/etc/fstab
+    elif [${type} = 'swap' ]; then
+      echo -e "\nUUID=${uuid} swap ${type} defaults 0 0" >> /mnt/etc/fstab
     else
       echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
     fi
