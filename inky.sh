@@ -69,7 +69,7 @@ filesystem() {
     ask 'enter the device [/dev/sda1]' '/dev/sda1'
     device=${result}
 
-    ask 'enter the filesystem type ext2, ext3, [ext4], reiserfs, jfs, xfs, nilfs' 'ext4'
+    ask 'enter the filesystem type ext2, ext3, [ext4], reiserfs, jfs, xfs, nilfs, tmpfs' 'ext4'
     type=${result}
 
     ask 'enter the filesystem location [/]' '/'
@@ -157,12 +157,15 @@ install() {
       nilfs)
         mkfs.nilfs $device
         ;;
+      tmpfs)
+        ;;
       *)
         echo "error"
         ;;
     esac
 
-    mount $device /mnt${location}
+      # todo: update for tmpfs
+      mount $device /mnt${location}
   done
 
   mount -t proc proc /mnt/proc
@@ -282,7 +285,11 @@ EOF
     type=$(echo "$part" | awk '{ print $3 }')
     uuid=$(blkid $device -o value | head -n 1)
 
-    echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
+    if [ ${type} = 'tmpfs' ]; then
+      echo -e "\n${type} ${location} ${type} defaults 0 0" >> /mnt/etc/fstab
+    else
+      echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
+    fi
   done
 
   if [ ${INTERACTIVE} = 'yes' ]; then
