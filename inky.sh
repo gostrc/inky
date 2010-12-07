@@ -185,6 +185,7 @@ install() {
     esac
   done
 
+  mkdir -p /mnt/{proc,sys,dev}
   mount -t proc proc /mnt/proc
   mount -t sysfs sys /mnt/sys
   mount -o bind /dev /mnt/dev
