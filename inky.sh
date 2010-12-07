@@ -130,7 +130,7 @@ install() {
   #############################################################################
   # FILESYSTEM MOUNTING
   #############################################################################
-  echo 'creating filesystems...'
+  echo 'creating and mounting filesystems...'
   for part in "$PARTITIONS"; do
     device=$(echo "$part" | awk '{ print $1 }')
     location=$(echo "$part" | awk '{ print $2 }')
@@ -138,34 +138,39 @@ install() {
     case $type in
       ext4)
         mkfs.ext4 $device
+        mount $device /mnt${location}
         ;;
       ext3)
         mkfs.ext3 $device
+        mount $device /mnt${location}
         ;;
       ext2)
         mkfs.ext2 $device
+        mount $device /mnt${location}
         ;;
       reiserfs)
         yes | mkfs.reiserfs $device
+        mount $device /mnt${location}
         ;;
       jfs)
         mkfs.jfs $device
+        mount $device /mnt${location}
         ;;
       xfs)
         mkfs.xfs $device
+        mount $device /mnt${location}
         ;;
       nilfs)
         mkfs.nilfs $device
+        mount $device /mnt${location}
         ;;
       tmpfs)
+        mount -t tmpfs tmpfs /mnt${location}
         ;;
       *)
         echo "error"
         ;;
     esac
-
-      # todo: update for tmpfs
-      mount $device /mnt${location}
   done
 
   mount -t proc proc /mnt/proc
