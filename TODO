@@ -1,0 +1,5 @@
+add openntpd support
+fix lvm support
+add lilo
+add grub
+fix btrfs
