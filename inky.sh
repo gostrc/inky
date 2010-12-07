@@ -303,9 +303,12 @@ EOF
     device=$(echo "$part" | awk '{ print $1 }')
     location=$(echo "$part" | awk '{ print $2 }')
     type=$(echo "$part" | awk '{ print $3 }')
+    lvm=$(echo "$part" | awk '{ print $4 }')
     uuid=$(blkid $device -o value | head -n 1)
 
-    if [ ${type} = 'tmpfs' ]; then
+    if [ ${lvm} = 'yes' ]; then
+      echo -e "\n${device} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
+    elif [ ${type} = 'tmpfs' ]; then
       echo -e "\n${type} ${location} ${type} defaults 0 0" >> /mnt/etc/fstab
     elif [ ${type} = 'swap' ]; then
       echo -e "\nUUID=${uuid} swap ${type} defaults 0 0" >> /mnt/etc/fstab
