@@ -69,7 +69,7 @@ filesystem() {
     ask 'enter the device [/dev/sda1]' '/dev/sda1'
     device=${result}
 
-    ask 'enter the filesystem type ext2, ext3, [ext4], reiserfs, jfs, xfs, nilfs, tmpfs, swap' 'ext4'
+    ask 'enter the filesystem type ext2, ext3, [ext4], reiserfs, jfs, xfs, nilfs, btrfs, tmpfs, swap' 'ext4'
     type=${result}
 
     if [ ${type} = 'swap' ]; then
@@ -166,6 +166,10 @@ install() {
         ;;
       nilfs)
         mkfs.nilfs ${device}
+        mount ${device} /mnt${location}
+        ;;
+      btrfs)
+        mkfs.btrfs ${device}
         mount ${device} /mnt${location}
         ;;
       tmpfs)
@@ -302,6 +306,8 @@ EOF
       echo -e "\n${type} ${location} ${type} defaults 0 0" >> /mnt/etc/fstab
     elif [${type} = 'swap' ]; then
       echo -e "\nUUID=${uuid} swap ${type} defaults 0 0" >> /mnt/etc/fstab
+    elif [ ${type} = 'nilfs' ] || [ ${type} = 'btrfs' ]; then
+      echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 0" >> /mnt/etc/fstab # these don't support fsck yet
     else
       echo -e "\nUUID=${uuid} ${location} ${type} defaults 0 1" >> /mnt/etc/fstab
     fi
